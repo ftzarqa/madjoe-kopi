@@ -1,12 +1,13 @@
 // ============================================================
 // src/components/FloatingCartButton.tsx
-// Floating Action Button (FAB) keranjang untuk mobile.
-// Tampil hanya saat ada item di keranjang dan sidebar tertutup.
+// Floating Action Button (FAB) Mobile dengan Spring Motion
 // ============================================================
 
 "use client";
 
-import { ShoppingCart } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingBag } from "lucide-react";
+import { CINEMATIC_EASE } from "./Reveal";
 
 interface FloatingCartButtonProps {
   totalItems: number;
@@ -15,42 +16,54 @@ interface FloatingCartButtonProps {
 }
 
 /**
- * FloatingCartButton — FAB yang muncul di pojok kanan bawah.
- * Hanya tampil di mobile (md:hidden) saat keranjang tidak kosong
- * dan sidebar belum terbuka — membantu aksesibilitas di layar kecil.
+ * FloatingCartButton — FAB di pojok kanan bawah khusus tampilan mobile
+ * dengan animasi spring bounce dan micro-interaction.
  */
 export default function FloatingCartButton({
   totalItems,
   isCartOpen,
   onOpen,
 }: FloatingCartButtonProps) {
-  // Jangan tampil jika keranjang kosong atau sidebar sudah terbuka
-  if (totalItems === 0 || isCartOpen) return null;
+  const showFab = totalItems > 0 && !isCartOpen;
 
   return (
-    <button
-      onClick={onOpen}
-      aria-label={`Buka keranjang (${totalItems} item)`}
-      className="fixed bottom-6 right-6 z-30
-                 md:hidden
-                 bg-brand-coffee text-white
-                 w-16 h-16 rounded-full shadow-2xl
-                 flex items-center justify-center
-                 transition-all duration-300
-                 hover:bg-brand-espresso hover:scale-110
-                 active:scale-95
-                 animate-fade-in"
-    >
-      <ShoppingCart size={24} />
+    <AnimatePresence>
+      {showFab && (
+        <motion.button
+          onClick={onOpen}
+          initial={{ scale: 0, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0, opacity: 0, y: 20 }}
+          whileHover={{
+            scale: 1.08,
+            boxShadow: "0 12px 28px rgba(206, 24, 39, 0.4)",
+          }}
+          whileTap={{ scale: 0.92 }}
+          transition={{ type: "spring", stiffness: 450, damping: 24 }}
+          aria-label={`Buka keranjang belanja (${totalItems} item)`}
+          className="fixed bottom-6 right-5 z-40 md:hidden
+                     bg-[#CE1827] text-white
+                     w-14 h-14 rounded-full
+                     shadow-xl shadow-[#CE1827]/35
+                     flex items-center justify-center cursor-pointer"
+        >
+          <ShoppingBag size={22} className="text-white" />
 
-      {/* Badge jumlah item */}
-      <span
-        className="absolute -top-1 -right-1
-                   bg-red-500 text-white text-xs font-bold
-                   w-6 h-6 rounded-full flex items-center justify-center"
-      >
-        {totalItems > 9 ? "9+" : totalItems}
-      </span>
-    </button>
+          {/* Badge Jumlah Item */}
+          <motion.span
+            key={totalItems}
+            initial={{ scale: 0.4 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 600, damping: 20 }}
+            className="absolute -top-1.5 -right-1.5
+                       bg-white text-[#CE1827] text-[11px] font-black
+                       w-5 h-5 rounded-full flex items-center justify-center
+                       shadow-md ring-2 ring-[#CE1827]"
+          >
+            {totalItems > 99 ? "99+" : totalItems}
+          </motion.span>
+        </motion.button>
+      )}
+    </AnimatePresence>
   );
 }

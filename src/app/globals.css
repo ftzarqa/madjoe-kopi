@@ -1,30 +1,37 @@
 /* ============================================================
    src/app/globals.css
-   Global styles untuk Madjoe Kopi — Tailwind CSS v4
+   Identitas Visual Resmi Madjoe Kopi (Tailwind CSS v4)
    ============================================================ */
 
-/* Import Tailwind CSS v4 — menggantikan @tailwind directives */
 @import "tailwindcss";
 
-/* ── Design Tokens via @theme ──────────────────────────────
-   Mendefinisikan custom colors agar tersedia sebagai utility
-   class Tailwind (bg-brand-*, text-brand-*, dll).
-   ─────────────────────────────────────────────────────────── */
+/* ── Design Tokens Resmi Madjoe Kopi ─────────────────────── */
 @theme {
-  /* Palet warna brand Madjoe Kopi */
-  --color-brand-espresso: #2c1810;  /* Coklat espresso gelap */
-  --color-brand-coffee:   #6f4e37;  /* Coklat kopi medium */
-  --color-brand-latte:    #c8a882;  /* Krem latte */
-  --color-brand-cream:    #f5ecd7;  /* Krem muda / background */
-  --color-brand-gold:     #d4a853;  /* Aksen emas */
-  --color-brand-green:    #2d6a4f;  /* Aksen hijau matcha */
+  /* Palet Warna Resmi (Brand Guidelines) */
+  --color-signature-red:  #CE1827; /* Primary CTA, Badge Harga, Aksi Aktif */
+  --color-warm-cream:     #F3ECE3; /* Background Utama Kontainer (60-70%) */
+  --color-pure-white:     #FFFFFF; /* Background Sekunder (Card, Modal, Dialog) */
+  --color-espresso-brown: #4A2E1B; /* Teks Utama, Heading, Border Halus */
+  --color-caramel-brown:  #C68E58; /* Aksen, Garis Pembatas, Tag Kategori Sekunder */
 
-  /* Font families */
+  /* Alias Brand untuk Kemudahan Penulisan */
+  --color-brand-red:      #CE1827;
+  --color-brand-cream:    #F3ECE3;
+  --color-brand-white:    #FFFFFF;
+  --color-brand-espresso: #4A2E1B;
+  --color-brand-caramel:  #C68E58;
+
+  /* Backward-compatible aliases */
+  --color-brand-coffee:   #4A2E1B;
+  --color-brand-latte:    #C68E58;
+  --color-brand-gold:     #C68E58;
+
+  /* Tipografi */
   --font-serif: Georgia, Cambria, "Times New Roman", serif;
-  --font-sans:  Inter, system-ui, sans-serif;
+  --font-sans:  Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-  /* Animasi custom */
-  --animate-slide-in-right: slideInRight 0.3s ease-out;
+  /* Keyframe Animasi */
+  --animate-slide-in-right: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-fade-in:        fadeIn 0.2s ease-out;
   --animate-bounce-once:    bounceOnce 0.4s ease-out;
 
@@ -44,64 +51,161 @@
   }
 }
 
-/* ── Base styles ────────────────────────────────────────── */
+/* ── Base Styles: Warm Cream Background & Espresso Brown Text ── */
 @layer base {
   html {
     scroll-behavior: smooth;
+    background-color: var(--color-warm-cream);
+    color: var(--color-espresso-brown);
+  }
+
+  body {
+    background-color: var(--color-warm-cream);
+    color: var(--color-espresso-brown);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    color: var(--color-espresso-brown);
+  }
+
+  ::selection {
+    background-color: #CE1827;
+    color: #FFFFFF;
   }
 }
 
-/* ── Komponen reusable ──────────────────────────────────── */
+/* ── Komponen Reusable dengan Identitas Visual Resmi ── */
 @layer components {
-  /* Kartu menu */
+  /* Menu Card: Pure White di atas Warm Cream, rounded-2xl, bayangan lembut */
   .menu-card {
-    @apply bg-white rounded-2xl shadow-md overflow-hidden
-           transition-all duration-300
-           hover:shadow-xl hover:-translate-y-1;
+    background-color: var(--color-pure-white);
+    border-radius: 1rem;
+    border: 1px solid rgba(74, 46, 27, 0.08);
+    box-shadow: 0 4px 12px -2px rgba(74, 46, 27, 0.05);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   }
 
-  /* Tombol utama */
+  .menu-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 28px -6px rgba(74, 46, 27, 0.12);
+    border-color: rgba(198, 142, 88, 0.35);
+  }
+
+  /* Tombol Utama (CTA Eksklusif Signature Red):
+     Micro-interaction hover, active:scale-95, dan soft red shadow */
   .btn-primary {
-    @apply bg-brand-coffee text-white font-semibold
-           px-4 py-2 rounded-xl cursor-pointer
-           transition-all duration-200
-           hover:bg-brand-espresso active:scale-95
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--color-signature-red);
+    color: #FFFFFF;
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 14px rgba(206, 24, 39, 0.25);
+    transition: transform 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
   }
 
-  /* Tombol secondary */
+  .btn-primary:hover {
+    background-color: #B51320;
+    box-shadow: 0 6px 20px rgba(206, 24, 39, 0.38);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(206, 24, 39, 0.25);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  /* Tombol Sekunder / Outline Caramel */
   .btn-secondary {
-    @apply border-2 border-brand-coffee text-brand-coffee
-           font-semibold px-4 py-2 rounded-xl cursor-pointer
-           transition-all duration-200
-           hover:bg-brand-coffee hover:text-white
-           active:scale-95;
+    border: 1.5px solid var(--color-caramel-brown);
+    color: var(--color-espresso-brown);
+    background-color: transparent;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
   }
 
-  /* Input form */
+  .btn-secondary:hover {
+    background-color: rgba(198, 142, 88, 0.12);
+    border-color: var(--color-espresso-brown);
+    color: var(--color-espresso-brown);
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.96);
+  }
+
+  /* Input Form: Border halus, fokus ring Caramel Brown atau Espresso Brown */
   .form-input {
-    @apply w-full border-2 border-brand-latte rounded-xl
-           px-4 py-3 text-brand-espresso bg-white
-           focus:outline-none focus:border-brand-coffee
-           transition-colors duration-200
-           placeholder:text-brand-latte;
+    width: 100%;
+    border: 1.5px solid rgba(74, 46, 27, 0.18);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--color-espresso-brown);
+    background-color: #FFFFFF;
+    font-size: 0.9375rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
   }
 
-  /* Badge kategori */
+  .form-input::placeholder {
+    color: rgba(74, 46, 27, 0.4);
+  }
+
+  .form-input:focus {
+    border-color: var(--color-espresso-brown);
+    box-shadow: 0 0 0 3px rgba(198, 142, 88, 0.28);
+  }
+
+  /* Secondary Category Badge (Caramel Brown accent) */
   .category-badge {
-    @apply inline-block text-xs font-semibold
-           px-3 py-1 rounded-full;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    background-color: rgba(243, 236, 227, 0.9);
+    color: var(--color-espresso-brown);
+    border: 1px solid rgba(198, 142, 88, 0.35);
+    backdrop-filter: blur(4px);
   }
 }
 
-/* ── Scrollbar styling (sidebar keranjang) ────────────── */
+/* ── Scrollbar Styling Bernuansa Warm Cafe ── */
 .cart-scroll::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 .cart-scroll::-webkit-scrollbar-track {
-  background: var(--color-brand-cream);
+  background: var(--color-warm-cream);
 }
 .cart-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-brand-latte);
+  background: var(--color-caramel-brown);
   border-radius: 10px;
+}
+.cart-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-espresso-brown);
 }

@@ -1,23 +1,32 @@
 // ============================================================
 // src/app/layout.tsx
-// Root layout — metadata SEO & font configuration
+// Root layout — Metadata SEO & Pembungkus AppShell + CartProvider
 // ============================================================
 
 import type { Metadata } from "next";
 import "./globals.css";
+import { CartProvider } from "@/context/CartContext";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "Madjoe Kopi — Order & Take | Mataram",
+  title: "Madjoe Kopi — Order & Take | Mataram, Lombok",
   description:
-    "Pesan kopi dan camilan favoritmu di Madjoe Kopi Mataram. Order online, ambil langsung — cepat, mudah, tanpa antri lama.",
-  keywords: ["kopi mataram", "madjoe kopi", "order kopi online", "kafe mataram", "NTB"],
+    "Sistem pemesanan mandiri Madjoe Kopi, Jl. Pejanggik No.66X Mataram. Kopi susu andalan, Americano segar, manual brew, dan makanan lezat tanpa antri lama.",
+  keywords: [
+    "madjoe kopi",
+    "kopi mataram",
+    "order and take",
+    "kopi kenangan mataram",
+    "cafe pejanggik",
+    "kuliner mataram",
+    "kopi susu lombok",
+  ],
   openGraph: {
-    title: "Madjoe Kopi — Order & Take",
-    description: "Pesan kopi favoritmu, ambil langsung di Madjoe Kopi Mataram.",
+    title: "Madjoe Kopi — Order & Take Mataram",
+    description: "Pesan kopi favoritmu, bayar in-app, ambil langsung tanpa antri di Jl. Pejanggik No.66X, Mataram.",
     type: "website",
     locale: "id_ID",
   },
-  // Favicon: tambahkan /public/favicon.ico untuk production
 };
 
 export default function RootLayout({
@@ -27,7 +36,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body>{children}</body>
+      <body className="bg-[#F3ECE3] text-[#4A2E1B] antialiased">
+        <CartProvider>
+          <AppShell>{children}</AppShell>
+        </CartProvider>
+      </body>
     </html>
   );
 }
