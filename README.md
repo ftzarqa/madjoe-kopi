@@ -100,3 +100,4 @@ Edit `tailwind.config.ts` → section `colors` → prefix `brand-*`.
 ---
 
 *Madjoe Kopi © 2024 — Mataram, NTB*
+# madjoe-kopi
