@@ -87,6 +87,7 @@ function getCategorySubtitle(category: MenuItem["category"]) {
  */
 export default function MenuCard({ item, quantity, onAdd, onDecrease }: MenuCardProps) {
   const [imgError, setImgError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const isInCart = quantity > 0;
   const hasImage = Boolean(item.imageUrl) && !imgError;
 
@@ -104,17 +105,31 @@ export default function MenuCard({ item, quantity, onAdd, onDecrease }: MenuCard
       className="bg-white rounded-2xl border border-[#4A2E1B]/12 shadow-[0_4px_16px_rgba(74,46,27,0.05)] hover:shadow-[0_20px_40px_-8px_rgba(74,46,27,0.14)] hover:border-[#C68E58]/45 transition-colors duration-300 flex flex-col overflow-hidden group"
     >
       
-      {/* ── Visual Media Container dengan Aspect Ratio Proporsional ── */}
-      <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-[#F3ECE3]">
+      {/* ── Visual Media Container dengan Aspect Ratio Proporsional (4/3) ── */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F3ECE3]">
         {hasImage ? (
-          <Image
-            src={item.imageUrl}
-            alt={item.imageAlt || item.name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-108"
-            onError={() => setImgError(true)}
-          />
+          <>
+            {/* Shimmer / Skeleton Placeholder saat memuat gambar */}
+            {isLoading && (
+              <div className="absolute inset-0 bg-gradient-to-r from-[#EFE5D8] via-[#FAF5EE] to-[#EFE5D8] animate-pulse flex items-center justify-center z-1">
+                <Coffee size={24} className="text-[#C68E58]/35 animate-pulse" />
+              </div>
+            )}
+            <Image
+              src={item.imageUrl}
+              alt={item.imageAlt || item.name}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className={`object-cover transition-all duration-700 ease-out group-hover:scale-108 ${
+                isLoading ? "opacity-0 scale-102" : "opacity-100 scale-100"
+              }`}
+              onLoad={() => setIsLoading(false)}
+              onError={() => {
+                setImgError(true);
+                setIsLoading(false);
+              }}
+            />
+          </>
         ) : (
           /* ── Fallback Visual Elegan Bertema Warm Cream / Caramel Brown ── */
           <div className="w-full h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-[#FAF5EE] via-[#F3ECE3] to-[#E5D7C5] p-5 text-center select-none overflow-hidden">
