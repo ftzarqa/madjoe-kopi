@@ -7,7 +7,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, Clock, MapPin, Send, ArrowRight, Share2, Sparkles } from "lucide-react";
+import { CheckCircle2, Clock, MapPin, Send, ArrowRight } from "lucide-react";
 import { OrderResult } from "@/types";
 import { CINEMATIC_EASE } from "./Reveal";
 
@@ -21,51 +21,21 @@ interface OrderSuccessModalProps {
 export default function OrderSuccessModal({ order, onClose }: OrderSuccessModalProps) {
   if (!order) return null;
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(price);
-
   /**
-   * Format pesan struk rapi untuk dikirim ke WhatsApp kasir (opsional)
+   * Format template pesan WhatsApp resmi untuk konfirmasi pesanan ke admin
    */
   const handleSendWhatsAppReceipt = () => {
-    const lines = order.items
-      .map(
-        (item, idx) =>
-          `  ${idx + 1}. ${item.name} x ${item.quantity} - ${formatPrice(
-            item.price * item.quantity
-          )}`
-      )
-      .join("\n");
-
     const text = [
-      `🧾 *BUKTI ORDER & TAKE — MADJOE KOPI*`,
-      `Kode Pesanan : *${order.orderId}*`,
-      `Status       : ${order.status === "paid" ? "✅ LUNAS (In-App)" : "⏳ BAYAR DI KASIR"}`,
-      `Nama Pemesan : ${order.customerName}`,
-      `Jam Ambil    : ${order.pickupTime} WITA`,
-      `Metode Bayar : ${
-        order.paymentMethod === "qris"
-          ? "QRIS / E-Wallet"
-          : order.paymentMethod === "va"
-          ? `Virtual Account (${order.paymentProvider || "Bank"})`
-          : "Tunai di Kasir"
-      }`,
+      "Halo Madjoe Kopi! Saya ingin konfirmasi pesanan dengan detail:",
+      `- Order ID: ${order.orderId}`,
+      `- Nama Pemesan: ${order.customerName}`,
+      `- Waktu Ambil: ${order.pickupTime}`,
+      `- Total: Rp ${order.totalPrice.toLocaleString("id-ID")}`,
+      `- Metode: ${order.paymentMethod}`,
+      `- Catatan: ${order.notes || "-"}`,
       "",
-      `📋 *Rincian Pesanan:*`,
-      lines,
-      "",
-      `💰 *Total: ${formatPrice(order.totalPrice)}*`,
-      order.notes ? `📝 *Catatan:* ${order.notes}` : "",
-      "",
-      `📍 *Lokasi Ambil:* Jl. Pejanggik No.66X, Mataram, NTB`,
-      `_Mohon siapkan pesanan sesuai jam ambil. Terima kasih!_ 🙏`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+      "Mohon segera diproses, terima kasih!",
+    ].join("\n");
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`, "_blank", "noopener,noreferrer");
@@ -110,33 +80,45 @@ export default function OrderSuccessModal({ order, onClose }: OrderSuccessModalP
           Barista kami sedang menyiapkan pesananmu dengan sepenuh hati.
         </p>
 
-        {/* ── KARTU KODE PESANAN UNIK (#MDK-XXXX) ── */}
-        <div className="my-5 p-4 rounded-2xl bg-[#F3ECE3] border border-[#C68E58]/40 text-center">
-          <span className="text-[11px] uppercase tracking-wider text-[#4A2E1B]/60 font-semibold block">
-            Kode Pesanan Kamu
+        {/* ── KARTU ID PESANAN RESMI (MDK-XXXX) ── */}
+        <div className="my-5 p-4 rounded-2xl bg-[#F3ECE3] border border-[#C68E58]/40 text-center shadow-inner">
+          <span className="text-[11px] uppercase tracking-wider text-[#4A2E1B]/70 font-semibold block">
+            ID Pesanan Resmi (Order ID)
           </span>
-          <span className="font-mono font-black text-3xl text-[#CE1827] tracking-wider my-1 block">
+          <span className="font-mono font-black text-2xl sm:text-3xl text-[#CE1827] tracking-wider my-1.5 block select-all">
             {order.orderId}
           </span>
           <span className="text-[11px] text-[#4A2E1B]/70 block">
-            Tunjukkan kode ini kepada kasir saat mengambil pesanan
+            Tunjukkan ID ini kepada kasir saat mengambil pesanan
           </span>
         </div>
 
-        {/* Estimasi Jam & Info Pengambilan */}
-        <div className="bg-white border border-[#4A2E1B]/15 rounded-2xl p-3.5 mb-5 text-left text-xs space-y-2">
+        {/* Estimasi Jam & Rincian Lengkap Pesanan */}
+        <div className="bg-white border border-[#4A2E1B]/15 rounded-2xl p-4 mb-5 text-left text-xs space-y-2.5">
+          <div className="flex items-center justify-between pb-2 border-b border-[#4A2E1B]/10">
+            <span className="text-[#4A2E1B]/70 font-medium">Order ID:</span>
+            <span className="font-mono font-bold text-[#CE1827] text-sm">{order.orderId}</span>
+          </div>
+
           <div className="flex items-center justify-between">
             <span className="text-[#4A2E1B]/70 flex items-center gap-1.5">
               <Clock size={13} className="text-[#C68E58]" />
-              Estimasi Pengambilan:
+              Waktu Ambil:
             </span>
-            <span className="font-bold text-[#4A2E1B]">{order.pickupTime} WITA</span>
+            <span className="font-bold text-[#4A2E1B]">{order.pickupTime}</span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-[#4A2E1B]/70">Metode Pembayaran:</span>
+            <span className="font-bold text-[#4A2E1B] uppercase text-[11px]">
+              {order.paymentMethod}
+            </span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-[#4A2E1B]/70">Status Pembayaran:</span>
             <span
-              className={`font-bold px-2 py-0.5 rounded-full text-[10px] uppercase ${
+              className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] uppercase ${
                 order.status === "paid"
                   ? "bg-green-100 text-green-800"
                   : "bg-amber-100 text-amber-800"
@@ -146,9 +128,37 @@ export default function OrderSuccessModal({ order, onClose }: OrderSuccessModalP
             </span>
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-[#4A2E1B]/70">Total Pesanan:</span>
-            <span className="font-bold text-[#CE1827] text-sm">{formatPrice(order.totalPrice)}</span>
+          {order.notes && (
+            <div className="flex items-start justify-between gap-2 pt-1.5 border-t border-[#4A2E1B]/10 text-[11px]">
+              <span className="text-[#4A2E1B]/70 shrink-0 font-medium">Catatan:</span>
+              <span className="text-[#4A2E1B] text-right italic">{order.notes}</span>
+            </div>
+          )}
+
+          {/* Rincian item pesanan jika ada */}
+          {order.items && order.items.length > 0 && (
+            <div className="pt-2 border-t border-[#4A2E1B]/10">
+              <span className="text-[11px] font-semibold text-[#4A2E1B]/80 block mb-1.5">
+                Rincian Pesanan ({order.items.reduce((acc, it) => acc + it.quantity, 0)} item):
+              </span>
+              <div className="space-y-1 max-h-32 overflow-y-auto cart-scroll pr-1">
+                {order.items.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-[11px] text-[#4A2E1B]/85">
+                    <span className="truncate max-w-[200px]">{item.name} × {item.quantity}</span>
+                    <span className="font-medium shrink-0">
+                      Rp {(item.price * item.quantity).toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-2 border-t border-[#4A2E1B]/10">
+            <span className="text-[#4A2E1B]/80 font-bold">Total:</span>
+            <span className="font-bold text-[#CE1827] text-base">
+              Rp {order.totalPrice.toLocaleString("id-ID")}
+            </span>
           </div>
 
           <div className="pt-2 border-t border-gray-100 text-[11px] text-[#4A2E1B]/70 flex items-start gap-1.5">
@@ -159,21 +169,21 @@ export default function OrderSuccessModal({ order, onClose }: OrderSuccessModalP
 
         {/* ── TOMBOL AKSI ── */}
         <div className="space-y-2.5">
-          {/* Tombol Kirim Salinan Struk ke WA (Opsional) */}
+          {/* Tombol Konfirmasi via WhatsApp */}
           <button
             onClick={handleSendWhatsAppReceipt}
-            className="w-full bg-[#25D366] text-white font-bold py-3 px-4 rounded-xl
+            className="w-full bg-[#25D366] text-white font-bold py-3.5 px-4 rounded-xl
                        flex items-center justify-center gap-2 text-xs sm:text-sm
                        shadow-md shadow-[#25D366]/25 hover:bg-[#20bd5a] transition-colors cursor-pointer"
           >
             <Send size={15} />
-            <span>Kirim Salinan Struk ke WhatsApp</span>
+            <span>Konfirmasi Pesanan via WhatsApp</span>
           </button>
 
           {/* Selesai / Pesan Lagi */}
           <button
             onClick={onClose}
-            className="w-full bg-[#CE1827] text-white font-bold py-3 px-4 rounded-xl
+            className="w-full bg-[#CE1827] text-white font-bold py-3.5 px-4 rounded-xl
                        flex items-center justify-center gap-2 text-xs sm:text-sm
                        shadow-md shadow-[#CE1827]/25 hover:bg-[#B51320] transition-colors cursor-pointer"
           >

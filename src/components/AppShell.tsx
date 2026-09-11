@@ -7,6 +7,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 import CartSidebar from "@/components/CartSidebar";
@@ -16,6 +17,9 @@ import OrderSuccessModal from "@/components/OrderSuccessModal";
 import { CheckoutFormData, OrderResult } from "@/types";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isDapur = pathname === "/dapur";
+
   const {
     items,
     totalItems,
@@ -55,7 +59,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3ECE3] text-[#4A2E1B] flex flex-col font-sans selection:bg-[#CE1827] selection:text-white">
+    <div
+      className={`min-h-screen ${
+        isDapur ? "bg-[#12100E] text-[#F3ECE3]" : "bg-[#F3ECE3] text-[#4A2E1B]"
+      } flex flex-col font-sans selection:bg-[#CE1827] selection:text-white`}
+    >
       {/* ── Floating Pill Navbar ── */}
       <Navbar
         totalItems={totalItems}
@@ -97,12 +105,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         onClose={() => setCompletedOrder(null)}
       />
 
-      {/* ── Floating Cart Button (Mobile Only) ── */}
-      <FloatingCartButton
-        totalItems={totalItems}
-        isCartOpen={isCartOpen}
-        onOpen={openCart}
-      />
+      {/* ── Floating Cart Button (Disembunyikan di layar Dapur) ── */}
+      {!isDapur && (
+        <FloatingCartButton
+          totalItems={totalItems}
+          isCartOpen={isCartOpen}
+          onOpen={openCart}
+        />
+      )}
     </div>
   );
 }

@@ -85,3 +85,30 @@ export interface OrderResult {
   status: "pending_payment" | "paid" | "ready_for_pickup";
   vaNumber?: string;
 }
+
+/**
+ * Representasi baris data pesanan di tabel Supabase `orders`
+ */
+export type KitchenOrderStatus = "pending" | "diproses" | "siap_diambil" | "selesai" | string;
+
+export interface OrderItemRecord {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  subtotal: number;
+}
+
+export interface OrderRecord {
+  id: string;
+  customer_name: string;
+  pickup_time: string;
+  notes?: string;
+  items: OrderItemRecord[];
+  total_amount: number;
+  payment_status: KitchenOrderStatus;
+  payment_method: string;
+  qris_url?: string | null;
+  created_at: string;
+}
+

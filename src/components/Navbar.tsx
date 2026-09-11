@@ -23,6 +23,7 @@ const navLinks = [
   { label: "Katalog Menu", href: "/menu" },
   { label: "Cerita", href: "/cerita" },
   { label: "Lokasi & Jam", href: "/lokasi" },
+  { label: "Dapur", href: "/dapur" },
 ];
 
 export default function Navbar({ totalItems, onCartOpen }: NavbarProps) {

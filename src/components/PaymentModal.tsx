@@ -2,6 +2,7 @@
 // src/components/PaymentModal.tsx
 // Modal Pembayaran In-App Interaktif (Ala Kopi Kenangan)
 // Mendukung: QRIS (Timer 15 min), Virtual Account (BCA/Mandiri/BRI), Tunai
+// Terintegrasi langsung dengan Supabase via /api/pesanan
 // ============================================================
 
 "use client";
@@ -20,6 +21,7 @@ import {
   Wallet,
   AlertCircle,
   Banknote,
+  RefreshCw,
 } from "lucide-react";
 import { CheckoutFormData, CartItem, OrderResult, PaymentMethod } from "@/types";
 import { CINEMATIC_EASE } from "./Reveal";
@@ -46,6 +48,13 @@ export default function PaymentModal({
   const [copied, setCopied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [vaNumber, setVaNumber] = useState("8271087852005008");
+
+  // State untuk QRIS Dinamis Midtrans
+  const [qrisUrl, setQrisUrl] = useState<string | null>(null);
+  const [qrisString, setQrisString] = useState<string | null>(null);
+  const [isLoadingQr, setIsLoadingQr] = useState(false);
+  const [createdOrderResult, setCreatedOrderResult] = useState<OrderResult | null>(null);
+  const [qrisOrderId, setQrisOrderId] = useState<string | null>(null);
 
   // Format countdown mm:ss
   const formatTime = (seconds: number) => {
@@ -87,31 +96,138 @@ export default function PaymentModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleConfirmPayment = () => {
+  // Inisialisasi transaksi QRIS dinamis Midtrans saat modal dibuka
+  useEffect(() => {
+    if (!isOpen || !checkoutData || checkoutData.paymentMethod !== "qris") {
+      setQrisUrl(null);
+      setQrisString(null);
+      setCreatedOrderResult(null);
+      setQrisOrderId(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoadingQr(true);
+
+    const initQrisTransaction = async () => {
+      try {
+        const res = await fetch("/api/pesanan", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            customerName: checkoutData.customerName,
+            pickupTime: checkoutData.pickupTime,
+            notes: checkoutData.notes,
+            paymentMethod: "qris",
+            cart: items.map((item) => ({
+              id: item.id,
+              quantity: item.quantity,
+            })),
+          }),
+        });
+
+        const data = await res.json();
+        if (!isMounted) return;
+
+        if (res.ok && data.success) {
+          setQrisOrderId(data.orderId);
+          if (data.qrUrl) {
+            setQrisUrl(data.qrUrl);
+          }
+          if (data.qrString) {
+            setQrisString(data.qrString);
+          }
+
+          const orderResult: OrderResult = {
+            orderId: data.orderId,
+            customerName: checkoutData.customerName,
+            pickupTime: checkoutData.pickupTime,
+            notes: checkoutData.notes,
+            paymentMethod: "qris",
+            paymentProvider: "QRIS Midtrans",
+            items: [...items],
+            totalPrice: data.totalAmount || totalPrice,
+            createdAt: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+            status: "paid",
+          };
+
+          setCreatedOrderResult(orderResult);
+        }
+      } catch (err) {
+        console.error("Gagal menginisialisasi QRIS Midtrans:", err);
+      } finally {
+        if (isMounted) setIsLoadingQr(false);
+      }
+    };
+
+    initQrisTransaction();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, checkoutData, items, totalPrice]);
+
+  // Konfirmasi pembayaran & simpan pesanan ke database Supabase
+  const handleConfirmPayment = async () => {
+    // Jika pesanan QRIS sudah dibuat saat buka modal, teruskan langsung
+    if (checkoutData.paymentMethod === "qris" && createdOrderResult) {
+      onSuccess(createdOrderResult);
+      return;
+    }
+
     setIsProcessing(true);
 
-    setTimeout(() => {
-      // Generate ID Pesanan acak (misal: #MDK-8921)
-      const randomCode = Math.floor(1000 + Math.random() * 9000);
-      const orderId = `#MDK-${randomCode}`;
+    try {
+      // 1. Kirim payload pesanan ke Route Handler backend
+      const res = await fetch("/api/pesanan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customerName: checkoutData.customerName,
+          pickupTime: checkoutData.pickupTime,
+          notes: checkoutData.notes,
+          paymentMethod: checkoutData.paymentMethod,
+          cart: items.map((item) => ({
+            id: item.id,
+            quantity: item.quantity,
+          })),
+        }),
+      });
 
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Gagal mencatat pesanan ke database");
+      }
+
+      // 2. Susun objek orderResult dengan Order ID resmi dari server
       const orderResult: OrderResult = {
-        orderId,
+        orderId: data.orderId,
         customerName: checkoutData.customerName,
         pickupTime: checkoutData.pickupTime,
         notes: checkoutData.notes,
         paymentMethod: checkoutData.paymentMethod,
         paymentProvider: checkoutData.paymentProvider,
         items: [...items],
-        totalPrice,
+        totalPrice: data.totalAmount || totalPrice,
         createdAt: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
         status: checkoutData.paymentMethod === "cash" ? "ready_for_pickup" : "paid",
         vaNumber: checkoutData.paymentMethod === "va" ? vaNumber : undefined,
       };
 
-      setIsProcessing(false);
+      // 3. Teruskan ke OrderSuccessModal & kosongkan keranjang
       onSuccess(orderResult);
-    }, 600);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan saat memproses pesanan.";
+      console.error("Gagal memproses pesanan:", msg);
+      alert(msg);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -178,51 +294,49 @@ export default function PaymentModal({
               <span>Selesaikan dalam <strong>{formatTime(timeLeft)}</strong></span>
             </div>
 
-            {/* Dummy Barcode QRIS Interaktif */}
+            {/* Box Barcode QRIS Dinamis Midtrans */}
             <div className="relative p-4 bg-white rounded-2xl border-2 border-[#4A2E1B]/15 shadow-md flex flex-col items-center mb-4">
-              <div className="text-[11px] font-bold tracking-widest text-[#4A2E1B] uppercase mb-2 border-b border-gray-100 pb-1 w-full text-center">
-                QRIS NASIONAL · MADJOE KOPI
+              <div className="text-[11px] font-bold tracking-widest text-[#4A2E1B] uppercase mb-2 border-b border-gray-100 pb-1 w-full text-center flex items-center justify-center gap-1.5">
+                <span>QRIS DINAMIS · MIDTRANS SANDBOX</span>
               </div>
-              
-              {/* Ilustrasi Barcode SVG QRIS */}
-              <div className="w-52 h-52 bg-white p-2 relative flex items-center justify-center border border-gray-200 rounded-xl">
-                <svg viewBox="0 0 100 100" className="w-full h-full text-[#4A2E1B]">
-                  {/* Outer Frame */}
-                  <rect x="5" y="5" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="4" rx="3" />
-                  <rect x="12" y="12" width="16" height="16" fill="currentColor" rx="2" />
 
-                  <rect x="65" y="5" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="4" rx="3" />
-                  <rect x="72" y="12" width="16" height="16" fill="currentColor" rx="2" />
-
-                  <rect x="5" y="65" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="4" rx="3" />
-                  <rect x="12" y="72" width="16" height="16" fill="currentColor" rx="2" />
-
-                  {/* QR Pattern Matrix Dots */}
-                  <rect x="42" y="8" width="6" height="6" fill="currentColor" />
-                  <rect x="52" y="18" width="6" height="6" fill="currentColor" />
-                  <rect x="42" y="28" width="6" height="6" fill="currentColor" />
-                  <rect x="8" y="42" width="6" height="6" fill="currentColor" />
-                  <rect x="22" y="48" width="6" height="6" fill="currentColor" />
-                  <rect x="40" y="42" width="8" height="8" fill="#CE1827" />
-                  <rect x="52" y="42" width="8" height="8" fill="currentColor" />
-                  <rect x="40" y="54" width="8" height="8" fill="currentColor" />
-                  <rect x="52" y="54" width="8" height="8" fill="#CE1827" />
-                  <rect x="68" y="42" width="6" height="6" fill="currentColor" />
-                  <rect x="80" y="48" width="6" height="6" fill="currentColor" />
-                  <rect x="42" y="68" width="6" height="6" fill="currentColor" />
-                  <rect x="52" y="78" width="6" height="6" fill="currentColor" />
-                  <rect x="42" y="88" width="6" height="6" fill="currentColor" />
-                  <rect x="68" y="68" width="10" height="10" fill="currentColor" />
-                  <rect x="82" y="72" width="10" height="10" fill="currentColor" />
-                  <rect x="72" y="86" width="14" height="6" fill="currentColor" />
-                </svg>
-
-                {/* Logo Kafe di Tengah QR */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-9 h-9 bg-white rounded-lg border border-[#C68E58]/40 shadow-md flex items-center justify-center text-[#CE1827] font-serif font-black text-xs">
-                    MDK
-                  </div>
+              {qrisOrderId && (
+                <div className="mb-2.5 px-3 py-0.5 rounded-full bg-[#F3ECE3] border border-[#C68E58]/40 text-[11px] font-mono font-bold text-[#CE1827]">
+                  Order ID: {qrisOrderId}
                 </div>
+              )}
+              
+              {/* Tampilan QR Code Real dari Midtrans / Loading / Fallback */}
+              <div className="w-56 h-56 bg-white p-2 relative flex items-center justify-center border border-gray-200 rounded-xl shadow-inner overflow-hidden">
+                {isLoadingQr ? (
+                  <div className="flex flex-col items-center justify-center text-center p-4">
+                    <RefreshCw size={26} className="animate-spin text-[#CE1827] mb-2" />
+                    <span className="text-xs text-[#4A2E1B]/80 font-bold">
+                      Membuat QRIS Dinamis...
+                    </span>
+                    <span className="text-[10px] text-[#4A2E1B]/50 mt-0.5">
+                      Menghubungkan Midtrans Core API
+                    </span>
+                  </div>
+                ) : qrisUrl ? (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrisUrl}
+                      alt={`QRIS Midtrans ${qrisOrderId || "Madjoe Kopi"}`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  /* Fallback jika gagal memuat QR dinamis */
+                  <div className="relative w-full h-full flex flex-col items-center justify-center text-center p-3">
+                    <AlertCircle size={28} className="text-amber-600 mb-1" />
+                    <span className="text-xs text-[#4A2E1B] font-bold">QRIS Tersedia di Kasir</span>
+                    <span className="text-[10px] text-gray-500 mt-1">
+                      Silakan konfirmasi pesanan dan bayar langsung di meja bar.
+                    </span>
+                  </div>
+                )}
               </div>
 
               <span className="text-[10px] text-gray-500 mt-2">
@@ -336,7 +450,7 @@ export default function PaymentModal({
             {isProcessing ? (
               <>
                 <span className="animate-spin text-sm">⏳</span>
-                <span>Memverifikasi Pembayaran...</span>
+                <span>Mencatat Pesanan ke Database...</span>
               </>
             ) : (
               <>
