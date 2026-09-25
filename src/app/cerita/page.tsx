@@ -154,9 +154,9 @@ export default function CeritaPage() {
               <span className="text-[10px] uppercase tracking-widest text-[#C68E58] font-bold block mb-1">
                 Kultur &amp; Persaudaraan
               </span>
-              <h3 className="font-serif font-bold text-lg sm:text-2xl leading-tight">
+           <h3 className="font-serif font-bold text-lg sm:text-2xl leading-tight text-white drop-shadow-lg">
                 Keluarga Besar Madjoe Kopi
-              </h3>
+          </h3>
               <p className="text-xs sm:text-sm text-white/80 mt-1">
                 Setiap cangkir tercipta berkat dedikasi tim dan kebersamaan komunitas yang selalu setia bertandang.
               </p>
