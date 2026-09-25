@@ -5,7 +5,8 @@ import { midtransCore } from "@/lib/midtrans";
 
 export async function POST(req: Request) {
   try {
-    const { customerName, pickupTime, notes, cart, paymentMethod } = await req.json();
+    console.log("Cek Key:", process.env.MIDTRANS_SERVER_KEY ? "Ada" : "Kosong");
+    const { customerName, whatsappNumber, pickupTime, notes, cart, paymentMethod } = await req.json();
 
     if (!customerName || !cart || cart.length === 0) {
       return NextResponse.json(
@@ -49,6 +50,7 @@ export async function POST(req: Request) {
           },
           customer_details: {
             first_name: customerName,
+            phone: whatsappNumber,
           },
           item_details: validatedItems.map(
             (item: { id: string; price: number; quantity: number; name: string }) => ({
@@ -62,7 +64,7 @@ export async function POST(req: Request) {
 
         const chargeResponse = await midtransCore.charge(midtransPayload);
 
-        // Ambil URL QR code dari array actions (name: "generate-qr-code")
+        // Ambil URL QR code dari array actions (jika ada, e.g. gopay)
         if (chargeResponse && Array.isArray(chargeResponse.actions)) {
           const qrAction = chargeResponse.actions.find(
             (action: { name: string; url: string }) => action.name === "generate-qr-code"
@@ -72,13 +74,35 @@ export async function POST(req: Request) {
           }
         }
 
+        // Jika metode qris, gambar QR code dapat diakses via endpoint Midtrans menggunakan transaction_id
+        if (!qrUrl && chargeResponse?.transaction_id) {
+          qrUrl = `https://api.sandbox.midtrans.com/v2/qris/${chargeResponse.transaction_id}/qr-code`;
+        }
+
         if (chargeResponse?.qr_string) {
           qrString = chargeResponse.qr_string;
         }
-      } catch (midtransError: unknown) {
+      } catch (midtransError: any) {
         console.error("Midtrans charge error:", midtransError);
-        // Fallback jika kredensial sandbox placeholder atau koneksi terhambat
-        qrUrl = `https://api.sandbox.midtrans.com/v2/qris/${orderId}/qr-code`;
+        
+        // Ekstrak detail error jaringan atau response dari Midtrans
+        const errorMessage = midtransError.message || "Unknown error";
+        const errorCause = midtransError.cause ? String(midtransError.cause) : null;
+        const apiResponse = midtransError.ApiResponse ? midtransError.ApiResponse : null;
+        
+        // Hentikan proses dan kembalikan detail error ke frontend untuk debugging
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Gagal terhubung ke API Midtrans: " + errorMessage,
+            details: {
+              cause: errorCause,
+              apiResponse,
+              raw: String(midtransError),
+            }
+          },
+          { status: 502 } // 502 Bad Gateway (failed upstream)
+        );
       }
     }
 

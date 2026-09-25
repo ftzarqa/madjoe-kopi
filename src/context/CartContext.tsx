@@ -44,10 +44,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [completedOrder, setCompletedOrder] = useState<OrderResult | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load cart from localStorage on mount (SSR safe)
+  // Load cart from sessionStorage on mount (SSR safe)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = sessionStorage.getItem(STORAGE_KEY);
       if (saved) {
         setItems(JSON.parse(saved));
       }
@@ -57,11 +57,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsHydrated(true);
   }, []);
 
-  // Save cart to localStorage on changes
+  // Save cart to sessionStorage on changes
   useEffect(() => {
     if (!isHydrated) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
       // ignore
     }
@@ -103,7 +103,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(() => {
     setItems([]);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     } catch {
       // ignore
     }

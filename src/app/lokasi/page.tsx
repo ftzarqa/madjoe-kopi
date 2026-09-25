@@ -95,7 +95,7 @@ export default function LokasiPage() {
           </div>
 
           <h1 className="font-serif font-black text-4xl sm:text-5xl lg:text-6xl text-[#4A2E1B] tracking-tight">
-            Lokasi &amp; Jam Buka
+            Visit Us
           </h1>
           <p className="text-xs sm:text-sm md:text-base text-[#4A2E1B]/70 mt-2.5 max-w-lg mx-auto leading-relaxed">
             Kunjungi kedai kami langsung di pusat Kota Mataram atau pesan take-away lewat web dan ambil di kasir.

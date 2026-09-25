@@ -44,10 +44,10 @@ export default function MenuCatalogPage() {
           </div>
 
           <h1 className="font-serif font-black text-4xl sm:text-5xl lg:text-6xl text-[#4A2E1B] tracking-tight">
-            Pilihan Menu Lengkap
+            Our Menu
           </h1>
           <p className="text-xs sm:text-sm md:text-base text-[#4A2E1B]/70 mt-2.5 leading-relaxed">
-            Semua diracik segar harian di Jl. Pejanggik No.66X Mataram. Pilih menu, masukkan keranjang, dan bayar in-app.
+            Semua diracik segar harian di Madjoe-Kopi. Pilih menu, masukkan keranjang, dan bayar in-app.
           </p>
         </Reveal>
       </div>

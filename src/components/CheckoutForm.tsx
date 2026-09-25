@@ -7,7 +7,7 @@
 
 import { useState, FormEvent } from "react";
 import { motion } from "framer-motion";
-import { User, Clock, FileText, QrCode, Building2, Banknote, ShieldCheck } from "lucide-react";
+import { User, Phone, Clock, FileText, QrCode, Building2, Banknote, ShieldCheck, AlertTriangle } from "lucide-react";
 import { CartItem, CheckoutFormData, PaymentMethod, EWalletProvider, BankProvider } from "@/types";
 import { CINEMATIC_EASE } from "./Reveal";
 
@@ -23,17 +23,69 @@ export default function CheckoutForm({
   onProceedToPayment,
 }: CheckoutFormProps) {
   const [customerName, setCustomerName] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [pickupTime, setPickupTime] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("qris");
   const [selectedWallet, setSelectedWallet] = useState<EWalletProvider>("gopay");
   const [selectedBank, setSelectedBank] = useState<BankProvider>("bca");
+  const [timeError, setTimeError] = useState("");
+
+  const [isTomorrow, setIsTomorrow] = useState(false);
+
+  // Waktu operasional: 08:00 - 24:00 WITA
+  const validateTime = (timeStr: string) => {
+    setTimeError("");
+    setIsTomorrow(false);
+    if (!timeStr) return false;
+
+    const [hoursStr, minutesStr] = timeStr.split(":");
+    const hours = parseInt(hoursStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+
+    // Validasi jam operasional (08:00 - 23:59)
+    if (hours < 8) {
+      setTimeError("Jam ambil di luar operasional (Buka 08:00 - 24:00 WITA)");
+      return false;
+    }
+
+    // Mendapatkan waktu saat ini di WITA (UTC+8)
+    const now = new Date();
+    const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+    const witaNow = new Date(utcTime + 3600000 * 8);
+
+    const currentHours = witaNow.getHours();
+    const currentMinutes = witaNow.getMinutes();
+
+    // Jika waktu yang dimasukkan lebih kecil dari waktu saat ini, anggap pesanan besok
+    if (hours < currentHours || (hours === currentHours && minutes < currentMinutes)) {
+      setIsTomorrow(true);
+    }
+
+    return true;
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = e.target.value;
+    setPickupTime(time);
+    validateTime(time);
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     if (cartItems.length === 0) {
       alert("Keranjang masih kosong!");
+      return;
+    }
+
+    // Validasi WhatsApp Number (angka saja)
+    if (!/^\d+$/.test(whatsappNumber)) {
+      alert("Nomor WhatsApp harus berupa angka!");
+      return;
+    }
+
+    if (!validateTime(pickupTime)) {
       return;
     }
 
@@ -44,9 +96,12 @@ export default function CheckoutForm({
         ? `${selectedBank.toUpperCase()} Virtual Account`
         : "Kasir (Tunai/EDC)";
 
+    const finalPickupTime = isTomorrow ? `${pickupTime} (Besok)` : pickupTime;
+
     const formData: CheckoutFormData = {
       customerName,
-      pickupTime,
+      whatsappNumber,
+      pickupTime: finalPickupTime,
       notes,
       paymentMethod,
       paymentProvider: providerName,
@@ -80,31 +135,66 @@ export default function CheckoutForm({
         />
       </div>
 
-      {/* ── 2. ESTIMASI JAM AMBIL ── */}
+      {/* ── 2. NOMOR WHATSAPP ── */}
+      <div>
+        <label
+          htmlFor="whatsappNumber"
+          className="block text-xs font-semibold text-[#4A2E1B] mb-1.5"
+        >
+          <Phone size={13} className="inline mr-1 text-[#C68E58]" />
+          Nomor WhatsApp <span className="text-[#CE1827]">*</span>
+        </label>
+        <input
+          id="whatsappNumber"
+          type="tel"
+          pattern="[0-9]*"
+          required
+          minLength={9}
+          maxLength={15}
+          placeholder="08123456789"
+          value={whatsappNumber}
+          onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, ""))}
+          className="w-full bg-white border border-[#4A2E1B]/20 rounded-xl px-3.5 py-2.5 text-sm text-[#4A2E1B] placeholder-[#4A2E1B]/40 focus:outline-none focus:border-[#4A2E1B] focus:ring-2 focus:ring-[#C68E58]/30 transition-all"
+        />
+      </div>
+
+      {/* ── 3. ESTIMASI JAM AMBIL ── */}
       <div>
         <label
           htmlFor="pickupTime"
-          className="block text-xs font-semibold text-[#4A2E1B] mb-1.5"
+          className="block text-xs font-semibold text-[#4A2E1B] mb-1.5 flex items-center justify-between"
         >
-          <Clock size={13} className="inline mr-1 text-[#C68E58]" />
-          Estimasi Jam Ambil <span className="text-[#CE1827]">*</span>
+          <div>
+            <Clock size={13} className="inline mr-1 text-[#C68E58]" />
+            Estimasi Jam Ambil <span className="text-[#CE1827]">*</span>
+          </div>
+          {isTomorrow && (
+            <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+              Besok
+            </span>
+          )}
         </label>
         <input
           id="pickupTime"
           type="time"
           required
           min="08:00"
-          max="23:30"
           value={pickupTime}
-          onChange={(e) => setPickupTime(e.target.value)}
-          className="w-full bg-white border border-[#4A2E1B]/20 rounded-xl px-3.5 py-2.5 text-sm text-[#4A2E1B] focus:outline-none focus:border-[#4A2E1B] focus:ring-2 focus:ring-[#C68E58]/30 transition-all"
+          onChange={handleTimeChange}
+          className={`w-full bg-white border ${timeError ? "border-[#CE1827]" : "border-[#4A2E1B]/20"} rounded-xl px-3.5 py-2.5 text-sm text-[#4A2E1B] focus:outline-none focus:border-[#4A2E1B] focus:ring-2 focus:ring-[#C68E58]/30 transition-all`}
         />
-        <span className="text-[11px] text-[#4A2E1B]/60 mt-1 block">
-          Buka 08.00 – 24.00 WITA (Setiap Hari)
-        </span>
+        {timeError ? (
+          <span className="text-[11px] text-[#CE1827] mt-1 block">
+            {timeError}
+          </span>
+        ) : (
+          <span className="text-[11px] text-[#4A2E1B]/60 mt-1 block">
+            Buka 08.00 – 24.00 WITA (Setiap Hari)
+          </span>
+        )}
       </div>
 
-      {/* ── 3. CATATAN PESANAN (OPSIONAL) ── */}
+      {/* ── 4. CATATAN PESANAN (OPSIONAL) ── */}
       <div>
         <label
           htmlFor="notes"
@@ -124,7 +214,7 @@ export default function CheckoutForm({
         />
       </div>
 
-      {/* ── 4. SELECTOR METODE PEMBAYARAN IN-APP ── */}
+      {/* ── 5. SELECTOR METODE PEMBAYARAN IN-APP ── */}
       <div className="pt-2 border-t border-[#4A2E1B]/10">
         <label className="block text-xs font-bold text-[#4A2E1B] mb-2 uppercase tracking-wider">
           Pilih Metode Pembayaran:
@@ -223,12 +313,22 @@ export default function CheckoutForm({
             </div>
           </div>
         )}
+
+        {/* Alert Kuning jika Kasir terpilih */}
+        {paymentMethod === "cash" && (
+          <div className="mt-2.5 p-3 rounded-xl bg-yellow-50 border border-yellow-200 flex items-start gap-2 text-xs text-yellow-800">
+            <AlertTriangle size={16} className="shrink-0 mt-0.5 text-yellow-600" />
+            <p className="leading-relaxed">
+              Pesanan tunai baru akan dibuat oleh barista setelah Anda tiba di kasir.
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* ── 5. TOMBOL SUBMIT KE SCREEN PEMBAYARAN ── */}
+      {/* ── 6. TOMBOL SUBMIT KE SCREEN PEMBAYARAN ── */}
       <motion.button
         type="submit"
-        disabled={cartItems.length === 0}
+        disabled={cartItems.length === 0 || !!timeError}
         whileHover={{
           scale: 1.02,
           boxShadow: "0 8px 24px rgba(206, 24, 39, 0.35)",
@@ -245,3 +345,4 @@ export default function CheckoutForm({
     </form>
   );
 }
+

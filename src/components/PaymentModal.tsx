@@ -35,6 +35,51 @@ interface PaymentModalProps {
   onSuccess: (order: OrderResult) => void;
 }
 
+/**
+ * Memvalidasi apakah URL QRIS valid, menggunakan protokol HTTPS, dan berasal dari domain resmi Midtrans.
+ * Mencegah celah keamanan DOM-based XSS yang dideteksi oleh security scanner (Snyk).
+ */
+export function isValidMidtransUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+
+  // 1. Pastikan URL diawali secara eksplisit dengan 'https://'
+  if (!trimmed.startsWith("https://")) return false;
+
+  try {
+    const parsed = new URL(trimmed);
+
+    // 2. Pastikan protokol adalah https:
+    if (parsed.protocol !== "https:") return false;
+
+    // 3. Pastikan hostname berasal dari domain resmi (midtrans, veritrans, gopay)
+    const hostname = parsed.hostname.toLowerCase();
+    const isMidtransHost =
+      hostname === "midtrans.com" ||
+      hostname.endsWith(".midtrans.com") ||
+      hostname === "veritrans.co.id" ||
+      hostname.endsWith(".veritrans.co.id") ||
+      hostname.endsWith("gopay.co.id");
+
+    return isMidtransHost;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Melakukan sanitasi dan normalisasi URL QRIS Midtrans.
+ * Mengembalikan string URL yang aman atau null jika tidak valid.
+ */
+export function sanitizeMidtransUrl(url: string | null | undefined): string | null {
+  if (!isValidMidtransUrl(url)) return null;
+  try {
+    return new URL(url!.trim()).href;
+  } catch {
+    return null;
+  }
+}
+
 export default function PaymentModal({
   isOpen,
   checkoutData,
@@ -55,6 +100,9 @@ export default function PaymentModal({
   const [isLoadingQr, setIsLoadingQr] = useState(false);
   const [createdOrderResult, setCreatedOrderResult] = useState<OrderResult | null>(null);
   const [qrisOrderId, setQrisOrderId] = useState<string | null>(null);
+
+  // URL QRIS yang telah divalidasi dan disanitasi secara aman untuk mencegah DOM-based XSS
+  const safeQrisUrl = sanitizeMidtransUrl(qrisUrl);
 
   // Format countdown mm:ss
   const formatTime = (seconds: number) => {
@@ -88,8 +136,6 @@ export default function PaymentModal({
     return () => clearInterval(interval);
   }, [isOpen, timeLeft]);
 
-  if (!isOpen || !checkoutData) return null;
-
   const handleCopyVa = () => {
     navigator.clipboard.writeText(vaNumber);
     setCopied(true);
@@ -118,6 +164,7 @@ export default function PaymentModal({
           },
           body: JSON.stringify({
             customerName: checkoutData.customerName,
+            whatsappNumber: checkoutData.whatsappNumber,
             pickupTime: checkoutData.pickupTime,
             notes: checkoutData.notes,
             paymentMethod: "qris",
@@ -131,12 +178,18 @@ export default function PaymentModal({
         const data = await res.json();
         if (!isMounted) return;
 
+        console.log("=== RESPON DARI API /pesanan ===", data);
+
         if (res.ok && data.success) {
           setQrisOrderId(data.orderId);
-          if (data.qrUrl) {
+          if (data.qrUrl && isValidMidtransUrl(data.qrUrl)) {
+            console.log("URL QRIS Valid:", data.qrUrl);
             setQrisUrl(data.qrUrl);
+          } else {
+            console.log("URL QRIS TIDAK Valid atau Kosong:", data.qrUrl);
           }
           if (data.qrString) {
+            console.log("QR String ditemukan:", data.qrString);
             setQrisString(data.qrString);
           }
 
@@ -154,6 +207,9 @@ export default function PaymentModal({
           };
 
           setCreatedOrderResult(orderResult);
+        } else {
+          console.error("GAGAL MEMUAT QRIS MIDTRANS:", data.error, data.details);
+          alert(`Gagal terhubung ke Midtrans:\n${data.error}\n\nSilakan cek console untuk detailnya.`);
         }
       } catch (err) {
         console.error("Gagal menginisialisasi QRIS Midtrans:", err);
@@ -171,6 +227,8 @@ export default function PaymentModal({
 
   // Konfirmasi pembayaran & simpan pesanan ke database Supabase
   const handleConfirmPayment = async () => {
+    if (!checkoutData) return;
+
     // Jika pesanan QRIS sudah dibuat saat buka modal, teruskan langsung
     if (checkoutData.paymentMethod === "qris" && createdOrderResult) {
       onSuccess(createdOrderResult);
@@ -188,6 +246,7 @@ export default function PaymentModal({
         },
         body: JSON.stringify({
           customerName: checkoutData.customerName,
+          whatsappNumber: checkoutData.whatsappNumber,
           pickupTime: checkoutData.pickupTime,
           notes: checkoutData.notes,
           paymentMethod: checkoutData.paymentMethod,
@@ -229,6 +288,8 @@ export default function PaymentModal({
       setIsProcessing(false);
     }
   };
+
+  if (!isOpen || !checkoutData) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
@@ -318,11 +379,11 @@ export default function PaymentModal({
                       Menghubungkan Midtrans Core API
                     </span>
                   </div>
-                ) : qrisUrl ? (
+                ) : safeQrisUrl ? (
                   <div className="relative w-full h-full flex items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={qrisUrl}
+                      src={safeQrisUrl}
                       alt={`QRIS Midtrans ${qrisOrderId || "Madjoe Kopi"}`}
                       className="w-full h-full object-contain"
                     />

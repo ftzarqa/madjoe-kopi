@@ -63,6 +63,7 @@ export type BankProvider = "bca" | "mandiri" | "bri";
  */
 export interface CheckoutFormData {
   customerName: string;
+  whatsappNumber: string;
   pickupTime: string;
   notes?: string;
   paymentMethod: PaymentMethod;

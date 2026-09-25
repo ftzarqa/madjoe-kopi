@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import AppShell from "@/components/AppShell";
@@ -36,6 +37,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
+      <head>
+        {/* Pastikan URL Midtrans untuk QRIS diarahkan secara strict ke URL Sandbox */}
+        <Script
+          src="https://app.sandbox.midtrans.com/snap/snap.js"
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className="bg-[#F3ECE3] text-[#4A2E1B] antialiased">
         <CartProvider>
           <AppShell>{children}</AppShell>

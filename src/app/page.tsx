@@ -75,7 +75,8 @@ export default function HomePage() {
               transition={{ duration: 0.7, delay: 0.2, ease: CINEMATIC_EASE }}
               className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-[#4A2E1B]/85 font-serif italic max-w-xl leading-relaxed"
             >
-              &ldquo;Kedai kopi klasik di jantung Kota Mataram. Pesan mandiri via web, bayar in-app, ambil tanpa antre.&rdquo;
+              &ldquo;Kedai kopi klasik di jantung Kota Mataram.&rdquo;
+              
             </motion.p>
 
             <motion.p
@@ -84,7 +85,7 @@ export default function HomePage() {
               transition={{ duration: 0.7, delay: 0.3, ease: CINEMATIC_EASE }}
               className="mt-3 text-xs sm:text-sm text-[#4A2E1B]/70 max-w-lg leading-relaxed font-normal"
             >
-              Kini hadir dengan sistem order mandiri ala Kopi Kenangan. Dukung pembayaran QRIS instan, Transfer Virtual Account, atau Tunai di meja kasir Jl. Pejanggik No.66X.
+              Kini hadir dengan sistem order mandiri ala Kopi Kenangan. Fast QRIS, Virtual Account, atau Tunai di meja kasir Madjoe-Kopi.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -325,7 +326,7 @@ export default function HomePage() {
             href="/menu"
             className="inline-flex items-center gap-2 bg-[#CE1827] text-white font-bold px-8 py-3.5 rounded-full text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-[#CE1827]/25 hover:bg-[#B51320] transition-all hover:scale-102 cursor-pointer"
           >
-            <span>Eksplorasi Seluruh Menu Madjoe</span>
+            <span>Other Menu in Madjoe</span>
             <ArrowRight size={16} />
           </Link>
         </div>
