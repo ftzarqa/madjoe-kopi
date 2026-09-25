@@ -141,13 +141,13 @@ export default function CeritaPage() {
       {/* ── BAB 3: FOTO KELUARGA & KOMUNITAS MADJOE ── */}
       <section className="mb-16">
         <Reveal>
-          <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-lg border border-[#4A2E1B]/15 group">
+          <div className="relative aspect-square sm:aspect-[4/3] w-full rounded-3xl overflow-hidden shadow-lg border border-[#4A2E1B]/10">
           <Image
            src="/images/madjoe/anggota-madjoe.jpeg"
            alt="Keluarga Besar dan Tim Madjoe Kopi Mataram"
            fill
            sizes="(max-width: 1200px) 100vw, 1200px"
-            className="object-contain bg-[#F3ECE3] transition-transform duration-700 ease-out group-hover:scale-105"
+            className="object-cover bg-[#F3ECE3] transition-transform duration-700 ease-out group-hover:scale-105"
           />
             <div className="absolute inset-0 bg-gradient-to-t from-[#4A2E1B]/90 via-black/30 to-transparent" />
             <div className="absolute bottom-5 left-5 right-5 sm:bottom-7 sm:left-7 text-white max-w-xl z-10">
