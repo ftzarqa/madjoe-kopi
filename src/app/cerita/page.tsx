@@ -150,7 +150,7 @@ export default function CeritaPage() {
               className="object-cover transition-transform duration-700 ease-out group-hover:scale-103"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#4A2E1B]/90 via-black/30 to-transparent" />
-            <div className="absolute bottom-5 left-5 right-5 sm:bottom-7 sm:left-7 text-white max-w-xl">
+            <div className="absolute bottom-5 left-5 right-5 sm:bottom-7 sm:left-7 text-white max-w-xl relative z-10">
               <span className="text-[10px] uppercase tracking-widest text-[#C68E58] font-bold block mb-1">
                 Kultur &amp; Persaudaraan
               </span>
