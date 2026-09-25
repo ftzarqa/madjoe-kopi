@@ -143,7 +143,7 @@ export const menuItems: MenuItem[] = [
     description: "Espresso susu berpadu rasa gurih-manis selai kacang panggang.",
     price: 15000,
     category: "sweet-coffee",
-    imageUrl: "/images/madjoe/RoastedPeanutButterCoffee.jpeg",
+    imageUrl: "/images/madjoe/RoastedPeanutButterCoffee2.jpeg",
     imageAlt: "Roasted Peanut Butter Coffee creamy gurih",
     isAvailable: true,
     isPopular: true,
