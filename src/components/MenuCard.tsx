@@ -81,6 +81,33 @@ function getCategorySubtitle(category: MenuItem["category"]) {
   }
 }
 
+const itemsWithoutImage = [
+  'madjoe oat latte',
+  'espresso',
+  'capuccino',
+  'wild blackberry',
+  'panana coffee',
+  'sweet strawberry',
+  'choco crumble coffee',
+  'coffee matcha latte',
+  'goguma (ice taro latte)',
+  'teh gajah (thai tea)',
+  'semangka',
+  'buah naga',
+  'nanas',
+  'tempe mendoan',
+  'sosis cop cop',
+  'ubi goreng',
+  'nasi telur kribo',
+  'ayam goreng tempong',
+  'nila goreng tempong',
+  'nasi goreng rw',
+  'tubruk',
+  'v60',
+  'cappuccino',
+  'americano oji'
+];
+
 /**
  * MenuCard — Kartu menu dengan proporsi bersih, sudut tegas rounded-2xl,
  * tipografi editorial, dan micro-interaction taktil saat disentuh/di-hover.
@@ -89,7 +116,11 @@ export default function MenuCard({ item, quantity, onAdd, onDecrease }: MenuCard
   const [imgError, setImgError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const isInCart = quantity > 0;
-  const hasImage = Boolean(item.imageUrl) && !imgError;
+
+  const normalizedName = item.name.trim().toLowerCase();
+  const isExcluded = itemsWithoutImage.includes(normalizedName);
+  
+  const hasImage = Boolean(item.imageUrl) && !imgError && !isExcluded;
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("id-ID", {
@@ -131,28 +162,29 @@ export default function MenuCard({ item, quantity, onAdd, onDecrease }: MenuCard
             />
           </>
         ) : (
-          /* ── Fallback Visual Elegan Bertema Warm Cream / Caramel Brown ── */
-          <div className="w-full h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-[#FAF5EE] via-[#F3ECE3] to-[#E5D7C5] p-5 text-center select-none overflow-hidden">
-            {/* Ornamen Garis Cincin Dekoratif Stempel Kedai */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-              <div className="w-36 h-36 rounded-full border border-dashed border-[#C68E58]/40" />
-              <div className="absolute w-24 h-24 rounded-full border border-[#C68E58]/30" />
-            </div>
-
-            {/* Ikon Minimalis Sesuai Kategori */}
-            <div className="relative z-10 w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white/90 border border-[#C68E58]/35 flex items-center justify-center mb-2 shadow-xs group-hover:scale-108 group-hover:rotate-2 transition-transform duration-300">
-              {getCategoryIcon(item.category)}
-            </div>
-
-            {/* Tipografi Identitas Madjoe Kopi */}
-            <div className="relative z-10">
-              <span className="text-xs font-serif font-black text-[#4A2E1B] tracking-tight block">
-                Madjoe Kopi
-              </span>
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-[#4A2E1B]/60 font-semibold block mt-0.5">
-                {getCategorySubtitle(item.category)}
-              </span>
-            </div>
+          /* ── Fallback Visual UI F&B Profesional (No Image) ── */
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 p-5 text-center select-none overflow-hidden">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="36"
+              height="36"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-slate-400 mb-2 opacity-80"
+            >
+              <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+              <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+              <line x1="6" y1="2" x2="6" y2="4" />
+              <line x1="10" y1="2" x2="10" y2="4" />
+              <line x1="14" y1="2" x2="14" y2="4" />
+            </svg>
+            <span className="text-xs font-semibold text-slate-400 tracking-wide uppercase">
+              No Image
+            </span>
           </div>
         )}
 
@@ -169,11 +201,13 @@ export default function MenuCard({ item, quantity, onAdd, onDecrease }: MenuCard
         </div>
 
         {/* Micro-interaction Panah Sudut (Terinspirasi ProjectCard portofolio-ref) */}
-        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-1.5 -translate-y-1.5 group-hover:translate-x-0 group-hover:translate-y-0">
-          <div className="w-7 h-7 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center text-[#4A2E1B] shadow-xs">
-            <ArrowUpRight size={14} className="text-[#CE1827]" />
+        {hasImage && (
+          <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-1.5 -translate-y-1.5 group-hover:translate-x-0 group-hover:translate-y-0">
+            <div className="w-7 h-7 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center text-[#4A2E1B] shadow-xs">
+              <ArrowUpRight size={14} className="text-[#CE1827]" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Overlay jika menu sedang habis */}
         {!item.isAvailable && (

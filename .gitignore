@@ -1,11 +1,14 @@
 # Madjoe Kopi dependencies
 node_modules/
 .next/
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Environment files & backups (Strict)
+.env*
+*.env*
+*.save
+*.bak
+*.backup
+*.old
+!.env.example
 
 # Logs
 npm-debug.log*

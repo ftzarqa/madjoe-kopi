@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { supabaseAdmin } from "@/lib/supabase";
 import { menuItems } from "@/data/menu";
 import { midtransCore } from "@/lib/midtrans";
@@ -136,12 +137,37 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          setAll(_cookiesToSet) {
+            // Read-only dalam context Route Handler
+          },
+        },
+      }
+    );
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const filter = searchParams.get("filter");
 
-    let query = supabaseAdmin
+    let query = supabase
       .from("orders")
       .select("*")
       .order("created_at", { ascending: false });

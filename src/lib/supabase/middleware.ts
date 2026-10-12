@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({
             request,
           });
@@ -34,10 +34,22 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Rute terlindungi
-  const isProtectedRoute = pathname.startsWith("/dapur") || pathname.startsWith("/admin");
+  // Rute terlindungi — mencakup halaman UI dan API endpoint sensitif
+  const isProtectedRoute =
+    pathname.startsWith("/dapur") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api/pesanan/status");
 
   if (!user && isProtectedRoute) {
+    // Untuk API route, kembalikan 401 JSON (bukan redirect HTML)
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: "Unauthorized: Sesi tidak ditemukan." },
+        { status: 401 }
+      );
+    }
+
+    // Untuk halaman UI, redirect ke /login
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
